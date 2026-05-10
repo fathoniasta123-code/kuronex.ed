@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KURONEX — 黒の探求者</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Serif+JP:wght@300;400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #070710;
+    --deep: #0C0C18;
+    --panel: #11111C;
+    --border: #1C1C2E;
+    --red: #E8001C;
+    --red-glow: rgba(232,0,28,0.15);
+    --white: #F0EEF5;
+    --muted: #52506A;
+    --silver: #A0A0B8;
+    --gold: #C9A84C;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  /* scanlines */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+    pointer-events: none; z-index: 999;
+  }
+
+  /* ambient glow top */
+  .glow-top {
+    position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 300px;
+    background: radial-gradient(ellipse, rgba(232,0,28,0.12), transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── AVATAR SECTION ── */
+  .avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .avatar-ring {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    position: relative;
+    margin-bottom: 14px;
+    box-shadow: 0 0 30px rgba(232,0,28,0.2);
+  }
+  .avatar-ring::before {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    border: 1px solid var(--red);
+    opacity: 0.35;
+    animation: pulse 3s ease-in-out infinite;
+  }
+  .avatar-ring::after {
+    content: '';
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 1px solid var(--red);
+    opacity: 0.12;
+    animation: pulse 3s ease-in-out infinite 0.5s;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.12; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.04); }
+  }
+
+  .name-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .name-en {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 38px;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--white) 40%, var(--silver));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .name-tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .name-tagline span { color: var(--red); }
+
+  /* STATUS PILL */
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(232,0,28,0.08);
+    border: 1px solid rgba(232,0,28,0.2);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-top: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--red);
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── TRAIT PILLS ── */
+  .traits {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both 0.15s;
+  }
+  .trait {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    color: var(--silver);
+    background: var(--panel);
+  }
+  .trait.active { border-color: var(--red); color: var(--red); }
+
+  /* ── BIO BLOCK ── */
+  .bio-block {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both 0.2s;
+  }
+  .bio-block::before { content:''; position:absolute; top:0;left:0; width:100%;height:2px; background:linear-gradient(90deg,var(--red),transparent); }
+  .corner { position:absolute; width:12px; height:12px; }
+  .tl{top:-1px;left:-1px;border-top:2px solid var(--red);border-left:2px solid var(--red);}
+  .tr{top:-1px;right:-1px;border-top:2px solid var(--red);border-right:2px solid var(--red);}
+  .bl{bottom:-1px;left:-1px;border-bottom:2px solid var(--red);border-left:2px solid var(--red);}
+  .br{bottom:-1px;right:-1px;border-bottom:2px solid var(--red);border-right:2px solid var(--red);}
+
+  .block-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px; letter-spacing: 3px;
+    color: var(--red); margin-bottom: 10px;
+  }
+  .bio-text {
+    font-size: 14px; line-height: 1.8;
+    color: var(--silver); font-weight: 500;
+  }
+  .bio-text strong { color: var(--white); font-weight: 700; }
+
+  /* ── STATS ── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    animation: fadeUp 0.6s ease both 0.25s;
+  }
+  .stat { background: var(--panel); padding: 14px 8px; text-align: center; }
+  .stat-icon { font-size: 18px; margin-bottom: 4px; }
+  .stat-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--muted); }
+
+  /* ── LINK BUTTONS ── */
+  .links-wrap {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .link-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--white);
+    text-decoration: none;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600; font-size: 15px;
+    letter-spacing: 1px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+    cursor: pointer;
+    animation: fadeUp 0.6s ease both;
+  }
+  .link-btn:hover {
+    border-color: var(--red);
+    background: rgba(232,0,28,0.06);
+    transform: translateX(6px);
+  }
+  .link-btn::after {
+    content: '→';
+    position: absolute; right: 18px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--muted);
+    transition: color 0.2s, right 0.2s;
+  }
+  .link-btn:hover::after { color: var(--red); right: 14px; }
+
+  .link-btn .btn-icon { font-size: 20px; min-width: 28px; text-align:center; }
+  .btn-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 2px;
+    color: var(--muted); display: block;
+    margin-top: 2px; font-weight: 400;
+  }
+
+  /* modal overlay */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(7,7,16,0.92);
+    z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.25s ease; }
+
+  .modal {
+    width: 100%; max-width: 440px;
+    background: var(--deep);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    animation: scaleIn 0.3s ease;
+  }
+  .modal::before { content:''; position:absolute; top:0;left:0;width:100%;height:2px; background:linear-gradient(90deg,var(--red),transparent); }
+
+  .modal-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .modal-icon { font-size: 28px; }
+  .modal-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; }
+  .modal-jp { font-family:'Noto Serif JP',serif; font-size:11px; color:var(--muted); letter-spacing:3px; display:block; margin-top:2px; }
+  .modal-close {
+    margin-left: auto; background: none; border: 1px solid var(--border);
+    color: var(--muted); font-family:'Share Tech Mono',monospace;
+    font-size:12px; padding: 6px 10px; cursor:pointer; letter-spacing:1px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+  .modal-body {
+    padding: 20px;
+    font-family:'Rajdhani',sans-serif;
+    font-size:14px; line-height:1.8;
+    color: var(--silver);
+  }
+  .modal-body strong { color:var(--white); }
+  .modal-body em { color:var(--red); font-style:normal; }
+
+  .modal-tag-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .modal-tag {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    letter-spacing:2px; padding:5px 10px;
+    border:1px solid var(--border); color:var(--muted);
+  }
+
+  /* footer */
+  .page-footer {
+    margin-top: 28px; text-align:center;
+    animation: fadeUp 0.6s ease both 0.6s;
+  }
+  .footer-jp { font-family:'Noto Serif JP',serif; font-size:11px; letter-spacing:6px; color:var(--muted); margin-bottom:6px; }
+  .footer-line { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:3px; color:#1A1A2E; }
+  .footer-line span { color:var(--red); }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes scaleIn { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+</style>
+</head>
+<body>
+<div class="glow-top"></div>
+
+<div class="card">
+
+  <!-- AVATAR -->
+  <div class="avatar-wrap">
+    <div class="avatar-ring">🖤</div>
+    <div class="name-jp">クロネックス</div>
+    <div class="name-en">KURONEX</div>
+    <div class="name-tagline"><span>黒の探求者</span> — The Dark Explorer</div>
+    <div class="status-pill"><div class="status-dot"></div> ONLINE — 🇮🇩 Indonesia</div>
+  </div>
+
+  <!-- TRAITS -->
+  <div class="traits">
+    <div class="trait active">⚔️ Beladiri</div>
+    <div class="trait active">🔬 Sains</div>
+    <div class="trait active">🎮 Gaming</div>
+    <div class="trait active">🖊️ Artist</div>
+    <div class="trait">🍕 Pizza</div>
+    <div class="trait">🖤 Dark</div>
+  </div>
+
+  <!-- BIO BLOCK -->
+  <div class="bio-block">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="block-label">// ABOUT.ME</div>
+    <div class="bio-text">
+      Aku <strong>Kuronex</strong> — seorang explorer asal <strong>Indonesia</strong> yang hidup di persimpangan antara sains, seni, beladiri, dan gaming.<br><br>
+      Siang hari aku mendalami ilmu, malam hari aku berlatih dan menggambar dunia yang ada di kepalaku. <em>Hitam</em> adalah warnaku — dalam, kompleks, dan penuh kemungkinan.
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-icon">⚔️</div><div class="stat-lbl">Fighter</div></div>
+    <div class="stat"><div class="stat-icon">🔬</div><div class="stat-lbl">Saintis</div></div>
+    <div class="stat"><div class="stat-icon">🎮</div><div class="stat-lbl">Gamer</div></div>
+    <div class="stat"><div class="stat-icon">🖊️</div><div class="stat-lbl">Artist</div></div>
+  </div>
+
+  <!-- LINK BUTTONS -->
+  <div class="links-wrap">
+
+    <div class="link-btn" style="animation-delay:0.3s" onclick="openModal('beladiri')">
+      <div class="btn-icon">⚔️</div>
+      <div><span>Beladiri</span><span class="btn-sub">// Seni & Filosofi Bertarung</span></div>
+    </div>
+
+    <div class="link-btn" style="animation-delay:0.35s" onclick="openModal('sains')">
+      <div class="btn-icon">🔬</div>
+      <div><span>Sains & Riset</span><span class="btn-sub">// Otak yang Selalu Bertanya</span></div>
+    </div>
+
+    <div class="link-btn" style="animation-delay:0.4s" onclick="openModal('art')">
+      <div class="btn-icon">🖊️</div>
+      <div><span>Art & Drawing</span><span class="btn-sub">// Dunia di Ujung Pena</span></div>
+    </div>
+
+    <div class="link-btn" style="animation-delay:0.45s" onclick="openModal('gaming')">
+      <div class="btn-icon">🎮</div>
+      <div><span>Gaming</span><span class="btn-sub">// Arena Strategi & Reflex</span></div>
+    </div>
+
+    <div class="link-btn" style="animation-delay:0.5s" onclick="openModal('about')">
+      <div class="btn-icon">🖤</div>
+      <div><span>Tentang Kuronex</span><span class="btn-sub">// Siapa Aku Sebenarnya</span></div>
+    </div>
+
+    <a class="link-btn" style="animation-delay:0.55s" href="https://www.tiktok.com/@asep_kenalpot86?_r=1&_t=ZS-96FCEL5eHn2" target="_blank">
+      <div class="btn-icon">🎵</div>
+      <div><span>TikTok</span><span class="btn-sub">// @asep_kenalpot86</span></div>
+    </a>
+
+    <a class="link-btn" style="animation-delay:0.6s" href="https://www.instagram.com/kuronex.id?igsh=Y3YxcXF1OHN1aHU%3D&utm_source=qr" target="_blank">
+      <div class="btn-icon">📸</div>
+      <div><span>Instagram</span><span class="btn-sub">// @kuronex.id</span></div>
+    </a>
+
+    <a class="link-btn" style="animation-delay:0.65s" href="https://discord.gg/87U3YmNrf" target="_blank">
+      <div class="btn-icon">🎮</div>
+      <div><span>Discord</span><span class="btn-sub">// Join Server Kuronex</span></div>
+    </a>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <div class="footer-jp">クロネックス</div>
+    <div class="footer-line">KURONEX <span>///</span> INDONESIA <span>///</span> 黒の探求者</div>
+  </div>
+
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<div class="modal-overlay" id="modal-beladiri" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon">⚔️</div>
+      <div><div class="modal-title">Beladiri</div><span class="modal-jp">武道 — Budo</span></div>
+      <button class="modal-close" onclick="closeModal('beladiri')">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      Beladiri bukan sekadar olahraga buatku — ini adalah <strong>cara hidup</strong>. Setiap teknik yang kupelajari mengajarkan satu hal: <em>disiplin mengalahkan bakat.</em><br><br>
+      Latihan rutin membentuk bukan hanya tubuh, tapi juga <strong>pola pikir</strong>. Di atas matras, tidak ada jalan pintas. Kamu maju karena kerja keras, atau kamu tidak maju sama sekali.<br><br>
+      <strong>"Train the body. Free the mind."</strong>
+      <div class="modal-tag-row">
+        <span class="modal-tag">⚔️ FIGHTER</span>
+        <span class="modal-tag">🥋 DISIPLIN</span>
+        <span class="modal-tag">💪 LATIHAN RUTIN</span>
+        <span class="modal-tag">🧘 FILOSOFI</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-sains" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon">🔬</div>
+      <div><div class="modal-title">Sains & Riset</div><span class="modal-jp">科学 — Kagaku</span></div>
+      <button class="modal-close" onclick="closeModal('sains')">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      Aku percaya satu hal: <em>rasa ingin tahu adalah senjata terkuat.</em> Sains bukan pelajaran sekolah — sains adalah cara melihat dunia dengan lebih jelas.<br><br>
+      Dari fisika, biologi, sampai teknologi — aku selalu ingin tahu <strong>kenapa sesuatu bekerja seperti itu</strong>. Kombinasi sains dan seni membuatku melihat pola yang orang lain lewatkan.<br><br>
+      <strong>"Question everything. Accept nothing without proof."</strong>
+      <div class="modal-tag-row">
+        <span class="modal-tag">🔬 SAINS</span>
+        <span class="modal-tag">🧠 LOGIKA</span>
+        <span class="modal-tag">⚗️ RISET</span>
+        <span class="modal-tag">🌌 RASA INGIN TAHU</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-art" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon">🖊️</div>
+      <div><div class="modal-title">Art & Drawing</div><span class="modal-jp">芸術 — Geijutsu</span></div>
+      <button class="modal-close" onclick="closeModal('art')">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      Menggambar adalah cara aku <em>bicara tanpa kata-kata.</em> Setiap karakter yang kubuat lahir dari dunia dalam kepalaku — dark, detail, dan penuh cerita yang belum selesai.<br><br>
+      Aku sedang terus belajar — dari sketsa kasar sampai karakter yang beneran hidup di atas kertas. Perjalanan ini belum selesai, dan justru <strong>itulah yang bikin seru.</strong><br><br>
+      <strong>"Art is the only place where darkness becomes beautiful."</strong>
+      <div class="modal-tag-row">
+        <span class="modal-tag">🖊️ DRAWING</span>
+        <span class="modal-tag">🎨 DARK ART</span>
+        <span class="modal-tag">📐 SKETSA</span>
+        <span class="modal-tag">⛩️ ANIME STYLE</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-gaming" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon">🎮</div>
+      <div><div class="modal-title">Gaming</div><span class="modal-jp">ゲーム — Gēmu</span></div>
+      <button class="modal-close" onclick="closeModal('gaming')">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      Game bukan pelarian — game adalah <em>arena strategi</em>. Setiap match mengajarkan cara membaca situasi, adaptasi cepat, dan eksekusi keputusan di bawah tekanan.<br><br>
+      Skill dalam game dan skill dalam kehidupan nyata <strong>lebih mirip dari yang kamu kira.</strong> Reflex, fokus, dan mental untuk bangkit setelah kalah — semua itu nyata.<br><br>
+      <strong>"Every game is just another battlefield."</strong>
+      <div class="modal-tag-row">
+        <span class="modal-tag">🎮 GAMER</span>
+        <span class="modal-tag">⚡ STRATEGI</span>
+        <span class="modal-tag">🏆 KOMPETITIF</span>
+        <span class="modal-tag">🖥️ GAMING INDO</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-about" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon">🖤</div>
+      <div><div class="modal-title">Tentang Kuronex</div><span class="modal-jp">黒の探求者</span></div>
+      <button class="modal-close" onclick="closeModal('about')">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      Nama <strong>KURONEX</strong> berasal dari <em>Kuro (黒)</em> — hitam dalam bahasa Jepang, dan <em>Nex</em> — tanpa batas, selalu ada yang berikutnya.<br><br>
+      Aku orang Indonesia yang hidup dengan prinsip: <strong>jangan pernah berhenti berkembang.</strong> Beladiri melatih tubuhku, sains melatih pikiranku, seni melatih jiwaku, dan gaming melatih strategiku.<br><br>
+      Hitam bukan tentang kegelapan — hitam adalah <em>warna semua kemungkinan sebelum sesuatu diciptakan.</em><br><br>
+      <strong>🍕 Fun fact:</strong> Pizza adalah makanan favoritku. Simple, kuat, dan bisa dinikmati kapan saja — persis seperti vibe hidupku.
+      <div class="modal-tag-row">
+        <span class="modal-tag">🇮🇩 INDONESIA</span>
+        <span class="modal-tag">🖤 DARK SOUL</span>
+        <span class="modal-tag">🍕 PIZZA LOVER</span>
+        <span class="modal-tag">∞ NO LIMITS</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById('modal-' + id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById('modal-' + id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeOnBg(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => {
+        m.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    }
+  });
+</script>
+</body>
+</html>
